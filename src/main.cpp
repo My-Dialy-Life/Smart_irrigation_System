@@ -39,7 +39,7 @@ const int ledPin = D4; // WIFI STATUS LED
 
 #define TRIGGER_PIN 0
 
-const String DEFAULT_SECRET_KEY = "SYSCOA1"; // Define a default secret key
+const String DEFAULT_SECRET_KEY = "SYSCO"; // Define a default secret key
 
 ESP8266WebServer server(80);
 WiFiManager wifiManager;
@@ -168,20 +168,61 @@ const char* mainPageEN = R"rawliteral(
     .config-button:hover {
       background-color: #E64A19;
     }
+      .marquee {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  background-color: black;
+}
+
+.marquee span {
+  display: inline-block;
+  padding-left: 100%;
+  animation: scroll-left 30s linear infinite;
+}
+
+@keyframes scroll-left {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
   </style>
 </head>
 <body>
   <h1>SMART IRRIGATION SYSTEM - v1.0</h1>
   <div class="datetime">
-    <p id="date">Loading date...</p>
-    <p id="time">Loading time...</p>
-  </div>
+        <p id="date">Loading date...</p>
+        <p id="time">Loading time...</p>
+      </div>
+    
+      <div class="status">
+        <p>[RUN] : SYSTEM Status : <span id="mcbStatus">Unknown</span></p>
+        <p>[TIME] : Total Duration: <span id="duration">Unknown</span></p>
+        <p>[WiFi] : SSID: <span id="ssid">Unknown</span></p>
+      </div>
 
-  <div class="status">
-    <p>[RUN] : SYSTEM Status : <span id="mcbStatus">Unknown</span></p>
-    <p>[TIME] : Total Duration: <span id="duration">Unknown</span></p>
-    <p>[WiFi] : SSID: <span id="ssid">Unknown</span></p>
-  </div>
+   <div class="scrollable-days">
+        <label for="daySelector">Select a Day:</label>
+        <select id="daySelector" onchange="updateTimes(this.value)">
+          <option value="0">Sunday</option>
+          <option value="1">Monday</option>
+          <option value="2">Tuesday</option>
+          <option value="3">Wednesday</option>
+          <option value="4">Thursday</option>
+          <option value="5">Friday</option>
+          <option value="6">Saturday</option>
+        </select>
+    
+        <div id="timeInputs">
+          <h2>SHOW TIME</h2>
+          <label for="onTime">On Time (HH:MM): </label>
+          <span id="onTime">00:00</span><br>
+          <label for="offTime">Off Time (HH:MM): </label>
+          <span id="offTime">00:00</span><br>
+        </div>
+      </div>
 
   <form action="/manualOn" method="POST">
     <input type="submit" value="Manually ON">
@@ -201,6 +242,10 @@ const char* mainPageEN = R"rawliteral(
   <form action="/emergency" method="POST">
     <input type="submit" value="Shut-Down!" style="color: red; font-weight: bold;">
   </form>
+
+
+
+
 
   <script>
     function updateStatus() {
@@ -253,67 +298,38 @@ const char* mainPageEN = R"rawliteral(
 
   </script>
 
-  <!-- Scrollable Days Section -->
-  <div class="scrollable-days">
-    <label for="daySelector">Select a Day:</label>
-    <select id="daySelector" onchange="updateTimes(this.value)">
-      <option value="0">Sunday</option>
-      <option value="1">Monday</option>
-      <option value="2">Tuesday</option>
-      <option value="3">Wednesday</option>
-      <option value="4">Thursday</option>
-      <option value="5">Friday</option>
-      <option value="6">Saturday</option>
-    
-    </select>
-
-    <div id="timeInputs">
-  <h2>SHOW TIME</h2>
-  <label for="onTime">On Time (HH:MM): </label>
-  <span id="onTime" name="onTime">00:00</span><br>
-  <label for="offTime">Off Time (HH:MM): </label>
-  <span id="offTime" name="offTime">00:00</span><br>
-</div>
+  
 
   <!-- End of Scrollable Days Section -->
 
-  <div class="footer">
-    ⚡ Embedded & IoT & Automation Products Developments [R&D]  V_1.0.0-M2 (Esp8266) SN:SYSCO0001A ISO2025 ⚡
-  </div>
+
+
   
-   <script>
- function updateSchedule() {
-    const newSchedule = [
-        { onHour: 5, onMinute: 0, offHour: 0, offMinute: 0 },
-        { onHour: 0, onMinute: 0, offHour: 9, offMinute: 35 },
-        { onHour: 9, onMinute: 30, offHour: 9, offMinute: 35 },
-        { onHour: 9, onMinute: 30, offHour: 9, offMinute: 35 },
-        { onHour: 9, onMinute: 30, offHour: 9, offMinute: 35 },
-        { onHour: 9, onMinute: 30, offHour: 9, offMinute: 35 },
-        { onHour: 9, onMinute: 30, offHour: 9, offMinute: 35 }
-    ];
+ 
 
-    fetch('http://<your_device_ip>/schedule', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newSchedule)
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Success:', data);
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-}
+  <script>
+        function updateTimes(dayIndex) {
+          const schedule = [
+            { on: '06:00', off: '07:00' },
+            { on: '07:00', off: '08:00' },
+            { on: '08:00', off: '09:00' },
+            { on: '09:00', off: '10:00' },
+            { on: '10:00', off: '11:00' },
+            { on: '11:00', off: '12:00' },
+            { on: '12:00', off: '13:00' }
+          ];
+    
+          const selectedSchedule = schedule[dayIndex];
+          document.getElementById('onTime').textContent = selectedSchedule.on;
+          document.getElementById('offTime').textContent = selectedSchedule.off;
+        }
+      </script>
 
-// Call this function to update the schedule
-updateSchedule();
 
-  </script>
-  
+  <div class="marquee">
+  <span>⚡ SYSCO INDUSTRY Embedded & IoT & Automation Products Developments [R&D] V_1.0.0-M1 (Esp8266) SN:SYSCOZ6 ISO-2025 ⚡</span>
+</div>
+
 </body>
 </html>
 )rawliteral";
